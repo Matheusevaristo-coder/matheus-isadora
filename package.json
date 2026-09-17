@@ -1,0 +1,25 @@
+{
+  "name": "matheus-isadora-casa-nova",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node node_modules/vite/bin/vite.js --host 0.0.0.0",
+    "build": "node node_modules/vite/bin/vite.js build",
+    "preview": "node node_modules/vite/bin/vite.js preview --host 0.0.0.0",
+    "test": "node --test tests/rsvp.test.js tests/gifts.test.js"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.0",
+    "firebase-admin": "^13.0.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwindcss": "^4.1.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "sharp": "^0.35.4",
+    "vite": "^6.1.0"
+  }
+}
