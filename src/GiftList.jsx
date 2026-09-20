@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowUpRight, ArrowLeft, Gift, Heart, Check, X } from 'lucide-react';
 import { gifts } from './content';
+import { reserveGift, watchReservations } from './data';
 const money = value => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
 export default function GiftList() {
@@ -12,31 +13,15 @@ export default function GiftList() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
-  useEffect(() => {
-    let active = true;
-    async function refresh() {
-      try {
-        const response = await fetch('/api/gifts');
-        const data = await response.json();
-        if (!response.ok || !Array.isArray(data.reserved)) throw new Error(data.error || 'Reservas indisponíveis.');
-        if (active) { setReserved(data.reserved); setReady(true); setNotice(''); }
-      } catch { if (active) { setReady(false); setNotice('Não foi possível consultar as reservas. Fale com Matheus ou Isadora antes de comprar.'); } }
-    }
-    refresh();
-    const interval = setInterval(refresh, 20000);
-    window.addEventListener('focus', refresh);
-    return () => { active = false; clearInterval(interval); window.removeEventListener('focus', refresh); };
-  }, []);
+  useEffect(() => watchReservations(
+    ids => { setReserved(ids); setReady(true); setNotice(''); },
+    () => { setReady(false); setNotice('Não foi possível consultar as reservas. Confira sua conexão ou fale com Matheus ou Isadora antes de comprar.'); }
+  ), []);
   async function reserve(e) {
     e.preventDefault(); setSaving(true); setError('');
     const form = new FormData(e.currentTarget);
     try {
-      const response = await fetch('/api/gifts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: selected.id, name: form.get('name'), phone: form.get('phone'), website: form.get('website') }) });
-      const data = await response.json();
-      if (!response.ok || !data.ok) {
-        if (response.status === 409) setReserved(current => [...new Set([...current, selected.id])]);
-        throw new Error(data.error || 'Não foi possível reservar.');
-      }
+      await reserveGift({ id: selected.id, name: form.get('name'), phone: form.get('phone'), website: form.get('website') });
       setReserved(current => [...new Set([...current, selected.id])]); setSuccess(true);
     } catch (err) { setError(err.message || 'Não foi possível reservar. Tente novamente.'); }
     finally { setSaving(false); }

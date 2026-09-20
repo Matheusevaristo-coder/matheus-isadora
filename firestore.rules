@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // giftStatus/{catalogId}: reserved=true, createdAt=server timestamp. No PII.
+    // giftReservations/{catalogId}: uid, name(2..100), phone(10..13 digits), createdAt.
+    // rsvps/{uid}: uid, name, phone, attendance(yes/no), guests(0..6), message(0..500), createdAt.
+    // All fields required and immutable. Admin console handles corrections.
+    function authenticated() { return request.auth != null; }
+    function owner(uid) { return authenticated() && request.auth.uid == uid; }
+    function validGift(id) {
+      return id in ['varal', 'puffs', 'protetor', 'escorredor-aco', 'marinex', 'diamond', 'porta-frios', 'potes', 'lixeira', 'gabinete', 'faqueiro', 'pressao', 'cesto', 'assadeiras', 'cama-bege', 'escorredor-branco', 'cafeteira-italiana', 'ferro', 'liquidificador', 'galheteiro', 'lavanderia', 'sanduicheira', 'cama-verde', 'banho'];
+    }
+    function validContact(data) {
+      return owner(data.uid) && data.name is string && data.name.size() >= 2 && data.name.size() <= 100
+        && data.phone is string && data.phone.matches('^[0-9]{10,13}$') && data.createdAt == request.time;
+    }
+    function validStatus(data) {
+      return data.keys().hasAll(['reserved', 'createdAt']) && data.keys().hasOnly(['reserved', 'createdAt'])
+        && data.reserved == true && data.createdAt == request.time;
+    }
+    function validReservation(data) {
+      return data.keys().hasAll(['uid', 'name', 'phone', 'createdAt'])
+        && data.keys().hasOnly(['uid', 'name', 'phone', 'createdAt']) && validContact(data);
+    }
+    function validRsvp(data) {
+      return data.keys().hasAll(['uid', 'name', 'phone', 'attendance', 'guests', 'message', 'createdAt'])
+        && data.keys().hasOnly(['uid', 'name', 'phone', 'attendance', 'guests', 'message', 'createdAt'])
+        && validContact(data) && data.attendance in ['yes', 'no'] && data.guests is int
+        && ((data.attendance == 'yes' && data.guests >= 1 && data.guests <= 6) || (data.attendance == 'no' && data.guests == 0))
+        && data.message is string && data.message.size() <= 500;
+    }
+    match /giftStatus/{id} {
+      allow get: if authenticated() && validGift(id);
+      allow list: if authenticated() && request.query.limit <= 24;
+      allow create: if authenticated() && validGift(id) && validStatus(request.resource.data)
+        && !exists(/databases/$(database)/documents/giftReservations/$(id))
+        && validReservation(getAfter(/databases/$(database)/documents/giftReservations/$(id)).data);
+      allow update, delete: if false;
+    }
+    match /giftReservations/{id} {
+      allow create: if authenticated() && validGift(id) && validReservation(request.resource.data)
+        && !exists(/databases/$(database)/documents/giftStatus/$(id))
+        && validStatus(getAfter(/databases/$(database)/documents/giftStatus/$(id)).data);
+      allow read, update, delete: if false;
+    }
+    match /rsvps/{uid} {
+      allow get: if owner(uid);
+      allow create: if owner(uid) && validRsvp(request.resource.data);
+      allow list, update, delete: if false;
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}
