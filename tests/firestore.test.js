@@ -16,6 +16,8 @@ function reserve(db, uid, id = 'varal', extra = {}, statusExtra = {}) {
   return batch.commit();
 }
 const rsvp = uid => ({ ...contact(uid), attendance: 'yes', guests: 2, message: '' });
+const googleToken = email => ({ email, email_verified: true, firebase: { sign_in_provider: 'google.com' } });
+const bootstrapEmail = 'matheusevaristo10@gmail.com';
 test('permite todos os presentes do catálogo e consulta usada pelo site', async () => {
   const db = env.authenticatedContext('alice').firestore();
   for (const gift of gifts) await assertSucceeds(reserve(db,'alice',gift.id));
@@ -72,7 +74,45 @@ test('RSVP válido, privado, por UID e sem sobrescrita', async () => {
 });
 test('RSVP rejeita fraudes e ausência com convidados', async () => {
   const db = env.authenticatedContext('alice').firestore();
-  for (const extra of [{uid:'bob'},{role:'admin'},{guests:7},{guests:1.5},{attendance:'no',guests:2},{message:'a'.repeat(501)},{createdAt:Timestamp.fromMillis(1)}]) await assertFails(setDoc(doc(db,'rsvps','alice'),{...rsvp('alice'),...extra}));
+  for (const extra of [{uid:'bob'},{role:'admin'},{guests:5},{guests:1.5},{attendance:'no',guests:2},{message:'a'.repeat(501)},{createdAt:Timestamp.fromMillis(1)}]) await assertFails(setDoc(doc(db,'rsvps','alice'),{...rsvp('alice'),...extra}));
   await assertFails(setDoc(doc(db,'rsvps','bob'),rsvp('alice')));
   await assertSucceeds(setDoc(doc(db,'rsvps','alice'),{...rsvp('alice'),attendance:'no',guests:0}));
+});
+test('administrador Google autorizado lê os dados privados e libera um presente', async () => {
+  const guest = env.authenticatedContext('guest').firestore();
+  const admin = env.authenticatedContext('matheus', googleToken(bootstrapEmail)).firestore();
+  await assertSucceeds(reserve(guest,'guest'));
+  await assertSucceeds(setDoc(doc(guest,'rsvps','guest'),rsvp('guest')));
+  assert.equal((await assertSucceeds(getDocs(query(collection(admin,'giftReservations'),limit(100))))).size,1);
+  assert.equal((await assertSucceeds(getDocs(query(collection(admin,'rsvps'),limit(200))))).size,1);
+  const batch = writeBatch(admin);
+  batch.delete(doc(admin,'giftStatus','varal'));
+  batch.delete(doc(admin,'giftReservations','varal'));
+  await assertSucceeds(batch.commit());
+  assert.equal((await assertSucceeds(getDoc(doc(admin,'giftStatus','varal')))).exists(),false);
+  assert.equal((await assertSucceeds(getDoc(doc(admin,'giftReservations','varal')))).exists(),false);
+});
+test('administrador principal cadastra Isadora sem permitir autoelevação', async () => {
+  const admin = env.authenticatedContext('matheus', googleToken(bootstrapEmail)).firestore();
+  const isadoraEmail = 'isadora@example.com';
+  const record = { email:isadoraEmail,name:'Isadora',createdBy:bootstrapEmail,createdAt:serverTimestamp() };
+  await assertSucceeds(setDoc(doc(admin,'admins',isadoraEmail),record));
+  const isadora = env.authenticatedContext('isadora',googleToken(isadoraEmail)).firestore();
+  await assertSucceeds(getDocs(query(collection(isadora,'giftReservations'),limit(100))));
+  await assertSucceeds(getDocs(query(collection(isadora,'admins'),limit(20))));
+  const ordinary = env.authenticatedContext('mallory',googleToken('mallory@example.com')).firestore();
+  await assertFails(setDoc(doc(ordinary,'admins','mallory@example.com'),{email:'mallory@example.com',name:'Mallory',createdBy:'mallory@example.com',createdAt:serverTimestamp()}));
+  await assertFails(getDocs(query(collection(ordinary,'giftReservations'),limit(100))));
+});
+test('acesso administrativo exige Google verificado e schema estrito', async () => {
+  const unverified = env.authenticatedContext('fake',{email:bootstrapEmail,email_verified:false,firebase:{sign_in_provider:'google.com'}}).firestore();
+  const password = env.authenticatedContext('fake2',{email:bootstrapEmail,email_verified:true,firebase:{sign_in_provider:'password'}}).firestore();
+  for (const db of [unverified,password]) await assertFails(getDocs(query(collection(db,'rsvps'),limit(200))));
+  const admin = env.authenticatedContext('matheus',googleToken(bootstrapEmail)).firestore();
+  await assertFails(setDoc(doc(admin,'admins','bad@example.com'),{email:'bad@example.com',name:'B',createdBy:bootstrapEmail,createdAt:serverTimestamp(),role:'owner'}));
+  await assertFails(getDocs(collection(admin,'rsvps')));
+  await assertFails(getDocs(query(collection(admin,'rsvps'),limit(201))));
+  await assertSucceeds(setDoc(doc(admin,'admins',bootstrapEmail),{email:bootstrapEmail,name:'Matheus',createdBy:bootstrapEmail,createdAt:serverTimestamp()}));
+  await assertFails(deleteDoc(doc(admin,'admins',bootstrapEmail)));
+  await assertFails(updateDoc(doc(admin,'admins',bootstrapEmail),{name:'Outro'}));
 });

@@ -7,7 +7,7 @@ export function validateRsvp(body) {
   if (name.length < 2 || name.length > 100) throw new Error('Informe seu nome (de 2 a 100 caracteres).');
   if (!/^\d{10,13}$/.test(phone)) throw new Error('Confira o WhatsApp, incluindo o DDD.');
   if (!['yes', 'no'].includes(body.attendance)) throw new Error('Selecione se você poderá ir.');
-  if (!Number.isInteger(body.guests) || (body.attendance === 'yes' ? body.guests < 1 || body.guests > 6 : body.guests !== 0)) throw new Error('Selecione uma quantidade válida de pessoas.');
+  if (!Number.isInteger(body.guests) || (body.attendance === 'yes' ? body.guests < 1 || body.guests > 4 : body.guests !== 0)) throw new Error('Selecione uma quantidade válida de pessoas.');
   if (message.length > 500) throw new Error('O recadinho pode ter até 500 caracteres.');
   return { name, phone, attendance: body.attendance, guests: body.guests, message };
 }

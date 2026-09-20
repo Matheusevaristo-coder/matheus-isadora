@@ -9,16 +9,20 @@ const config = {
 };
 let services;
 let signingIn;
-export async function firebaseSession() {
+export function firebaseServices() {
   if (!Object.values(config).every(Boolean)) throw new Error('O site ainda está sendo conectado ao Firebase. Tente novamente em breve.');
   if (!services) {
     const app = initializeApp(config);
     services = { auth: getAuth(app), db: getFirestore(app) };
   }
-  await services.auth.authStateReady();
-  if (!services.auth.currentUser) {
-    signingIn ||= signInAnonymously(services.auth).finally(() => { signingIn = null; });
+  return services;
+}
+export async function firebaseSession() {
+  const currentServices = firebaseServices();
+  await currentServices.auth.authStateReady();
+  if (!currentServices.auth.currentUser) {
+    signingIn ||= signInAnonymously(currentServices.auth).finally(() => { signingIn = null; });
     await signingIn;
   }
-  return { db: services.db, uid: services.auth.currentUser.uid };
+  return { db: currentServices.db, uid: currentServices.auth.currentUser.uid };
 }

@@ -37,7 +37,7 @@ export async function submitRsvp(body) {
   const data = validateRsvp(body);
   const { db, uid } = await firebaseSession();
   const reference = doc(db, 'rsvps', uid);
-  if ((await getDocFromServer(reference)).exists()) throw new Error('Já recebemos sua resposta neste navegador. Para alterá-la, fale com Matheus ou Isadora.');
+  if ((await getDocFromServer(reference)).exists()) throw new Error('Já recebemos sua resposta neste navegador. Para alterá-la, fale com Isadora ou Matheus.');
   try { await setDoc(reference, { ...data, uid, createdAt: serverTimestamp() }); }
   catch { throw new Error('Não conseguimos salvar a resposta. Se já confirmou, fale com o casal; caso contrário, tente novamente.'); }
 }

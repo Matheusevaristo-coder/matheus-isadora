@@ -1,7 +1,7 @@
 export const event = {
-  date: '2026-11-14T14:00:00-03:00',
-  venue: '',
-  address: '', // Preencha com rua, número, bairro, cidade e estado.
+  date: '2026-11-14T15:00:00-03:00',
+  venue: 'Bonsucesso',
+  address: 'Rua da Proclamação, 873 — próximo ao Guanabara',
 };
 // Valores informados pelo casal; disponibilidade e preço final são os da loja.
 const chosen = [
