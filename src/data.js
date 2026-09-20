@@ -1,6 +1,6 @@
 import { collection, doc, getDocFromServer, limit, onSnapshot, query, serverTimestamp, setDoc, writeBatch } from 'firebase/firestore';
 import { firebaseSession } from './firebase';
-import { gifts } from './content';
+import { visibleGiftCatalog } from './catalog';
 import { validateRsvp } from '../server/validation';
 export function watchReservations(onChange, onError) {
   let stopped = false;
@@ -17,10 +17,21 @@ export function watchReservations(onChange, onError) {
   }).catch(error => { if (!stopped) onError(error); });
   return () => { stopped = true; unsubscribe?.(); };
 }
+export function watchGiftCatalog(onChange, onError) {
+  let stopped = false;
+  let unsubscribe;
+  firebaseSession().then(({ db }) => {
+    if (stopped) return;
+    unsubscribe = onSnapshot(query(collection(db, 'giftCatalog'), limit(100)), snapshot => {
+      onChange(visibleGiftCatalog(snapshot.docs.map(item => ({ id: item.id, ...item.data() }))));
+    }, onError);
+  }).catch(error => { if (!stopped) onError(error); });
+  return () => { stopped = true; unsubscribe?.(); };
+}
 export async function reserveGift(body) {
   const name = typeof body.name === 'string' ? body.name.trim() : '';
   const phone = typeof body.phone === 'string' ? body.phone.replace(/\D/g, '') : '';
-  if (!gifts.some(gift => gift.id === body.id) || name.length < 2 || name.length > 100 || !/^\d{10,13}$/.test(phone) || body.website) throw new Error('Confira seu nome e WhatsApp com DDD.');
+  if (!/^[a-z0-9-]{2,80}$/.test(body.id) || name.length < 2 || name.length > 100 || !/^\d{10,13}$/.test(phone) || body.website) throw new Error('Confira seu nome e WhatsApp com DDD.');
   const { db, uid } = await firebaseSession();
   const status = doc(db, 'giftStatus', body.id);
   if ((await getDocFromServer(status)).exists()) throw new Error('Este presente já foi reservado. Escolha outro com carinho!');

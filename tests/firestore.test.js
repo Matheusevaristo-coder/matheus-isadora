@@ -18,6 +18,7 @@ function reserve(db, uid, id = 'varal', extra = {}, statusExtra = {}) {
 const rsvp = uid => ({ ...contact(uid), attendance: 'yes', guests: 2, message: '' });
 const googleToken = email => ({ email, email_verified: true, firebase: { sign_in_provider: 'google.com' } });
 const bootstrapEmail = 'matheusevaristo10@gmail.com';
+const catalogGift = (extra = {}) => ({ number:30,name:'Presente novo',category:'À mesa',description:'Descrição',url:'https://example.com/presente',store:'Loja',price:99.9,maxPrice:0,active:true,deleted:false,createdAt:serverTimestamp(),updatedAt:serverTimestamp(),...extra });
 test('permite todos os presentes do catálogo e consulta usada pelo site', async () => {
   const db = env.authenticatedContext('alice').firestore();
   for (const gift of gifts) await assertSucceeds(reserve(db,'alice',gift.id));
@@ -115,4 +116,25 @@ test('acesso administrativo exige Google verificado e schema estrito', async () 
   await assertSucceeds(setDoc(doc(admin,'admins',bootstrapEmail),{email:bootstrapEmail,name:'Matheus',createdBy:bootstrapEmail,createdAt:serverTimestamp()}));
   await assertFails(deleteDoc(doc(admin,'admins',bootstrapEmail)));
   await assertFails(updateDoc(doc(admin,'admins',bootstrapEmail),{name:'Outro'}));
+});
+test('CRUD do catálogo exige admin e controla disponibilidade para reserva', async () => {
+  const admin = env.authenticatedContext('matheus',googleToken(bootstrapEmail)).firestore();
+  const guest = env.authenticatedContext('guest').firestore();
+  const ordinary = env.authenticatedContext('mallory',googleToken('mallory@example.com')).firestore();
+  const reference = doc(admin,'giftCatalog','presente-novo');
+  await assertFails(setDoc(doc(ordinary,'giftCatalog','invasor'),catalogGift()));
+  await assertSucceeds(setDoc(reference,catalogGift()));
+  assert.equal((await assertSucceeds(getDocs(query(collection(guest,'giftCatalog'),limit(100))))).size,1);
+  await assertFails(getDocs(collection(guest,'giftCatalog')));
+  await assertFails(updateDoc(doc(guest,'giftCatalog','presente-novo'),{name:'Alterado',updatedAt:serverTimestamp()}));
+  await assertSucceeds(reserve(guest,'guest','presente-novo'));
+  const release = writeBatch(admin);
+  release.delete(doc(admin,'giftStatus','presente-novo'));
+  release.delete(doc(admin,'giftReservations','presente-novo'));
+  await assertSucceeds(release.commit());
+  await assertSucceeds(updateDoc(reference,{active:false,updatedAt:serverTimestamp()}));
+  await assertFails(reserve(guest,'guest','presente-novo'));
+  await assertFails(updateDoc(reference,{url:'javascript:alert(1)',updatedAt:serverTimestamp()}));
+  await assertSucceeds(updateDoc(reference,{name:'Título atualizado',url:'https://example.com/novo',active:true,updatedAt:serverTimestamp()}));
+  await assertSucceeds(deleteDoc(reference));
 });

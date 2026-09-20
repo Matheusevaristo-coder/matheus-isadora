@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowUpRight, ArrowLeft, Heart, Check, X } from 'lucide-react';
 import { gifts } from './content';
-import { reserveGift, watchReservations } from './data';
+import { reserveGift, watchGiftCatalog, watchReservations } from './data';
 const money = value => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
 export default function GiftList() {
   const [category, setCategory] = useState('Todos');
+  const [catalog, setCatalog] = useState(gifts);
   const [reserved, setReserved] = useState([]);
   const [ready, setReady] = useState(false);
   const [notice, setNotice] = useState('');
@@ -13,10 +14,17 @@ export default function GiftList() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
-  useEffect(() => watchReservations(
-    ids => { setReserved(ids); setReady(true); setNotice(''); },
-    () => { setReady(false); setNotice('Não foi possível consultar as reservas. Confira sua conexão ou fale com Isadora ou Matheus antes de comprar.'); }
-  ), []);
+  useEffect(() => {
+    const stopReservations = watchReservations(
+      ids => { setReserved(ids); setReady(true); setNotice(''); },
+      () => { setReady(false); setNotice('Não foi possível consultar as reservas. Confira sua conexão ou fale com Isadora ou Matheus antes de comprar.'); }
+    );
+    const stopCatalog = watchGiftCatalog(
+      setCatalog,
+      () => setNotice('Não foi possível carregar as atualizações da lista. Tente novamente em instantes.')
+    );
+    return () => { stopReservations(); stopCatalog(); };
+  }, []);
   async function reserve(e) {
     e.preventDefault(); setSaving(true); setError('');
     const form = new FormData(e.currentTarget);
@@ -29,8 +37,8 @@ export default function GiftList() {
   return <main className="gifts-page"><a className="text-link" href="/"><ArrowLeft size={16}/>Voltar ao convite</a><div className="gifts-heading"><p className="eyebrow">UM POUQUINHO DE VOCÊ NO NOSSO LAR</p><h1>Nossa lista de <em>presentes.</em></h1><p>Escolha um presente, reserve aqui e depois compre na loja.<br/>Assim, cada carinho chega sem repetir.</p><span className="gift-note">Reserve antes de comprar para evitar presentes repetidos ♡</span><span className="voltage-note">⚡ Nossa casa usa 110 V — atenção ao escolher eletrodomésticos.</span></div>
     <p className="price-note">Valores enviados pelo casal. O preço final e a disponibilidade são os da loja.</p>
     {notice && <p className="reservation-notice" role="status">{notice}</p>}
-    <div className="gift-filters" role="group" aria-label="Filtrar presentes">{['Todos', ...new Set(gifts.map(g => g.category))].map(item => <button key={item} aria-pressed={category === item} onClick={() => setCategory(item)}>{item}</button>)}</div>
-    <div className="gift-grid compact-gifts">{gifts.filter(g => category === 'Todos' || g.category === category).map(gift => {
+    <div className="gift-filters" role="group" aria-label="Filtrar presentes">{['Todos', ...new Set(catalog.map(g => g.category))].map(item => <button key={item} aria-pressed={category === item} onClick={() => setCategory(item)}>{item}</button>)}</div>
+    <div className="gift-grid compact-gifts">{catalog.filter(g => category === 'Todos' || g.category === category).map(gift => {
       const taken = reserved.includes(gift.id);
       return <article className={'gift-card' + (taken ? ' gift-reserved' : '')} key={gift.id}><div className="compact-gift-top"><span className="gift-number">#{String(gift.number).padStart(2, '0')}</span><span className={'availability' + (taken ? ' taken' : '')}>{taken ? 'Reservado ♡' : ready ? 'Disponível' : 'A confirmar'}</span></div><div className="gift-content"><p className="eyebrow">{gift.category}</p><h2>{gift.name}</h2><p>{gift.description}</p><p className="gift-price">{gift.price ? money(gift.price) + (gift.maxPrice ? ' – ' + money(gift.maxPrice) : '') : 'Valor na loja'}</p><a className="text-link" href={gift.url} target="_blank" rel="noopener noreferrer">{gift.store} <ArrowUpRight size={15}/></a><button className="button primary reserve-button" disabled={taken || !ready} onClick={() => { setSelected(gift); setSuccess(false); setError(''); }}>{taken ? 'Já escolhido' : 'Quero presentear'}</button></div></article>;
     })}</div><p className="gift-bottom"><Heart size={17}/>Obrigado por fazer parte do nosso novo lar!</p>

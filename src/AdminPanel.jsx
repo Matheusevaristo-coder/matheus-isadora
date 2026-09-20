@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, CheckCircle2, Gift, Heart, LogIn, LogOut, MessageCircle, Plus, RefreshCw, ShieldCheck, Trash2, Users } from 'lucide-react';
-import { gifts } from './content';
 import { addAdmin, currentAdminUser, loadAdminDashboard, releaseGift, removeAdmin, signInAdmin, signOutAdmin } from './adminData';
+import AdminGiftCatalog from './AdminGiftCatalog';
+import { mergeGiftCatalog } from './catalog';
 
 const bootstrapEmail = 'matheusevaristo10@gmail.com';
 const formatDate = value => value?.toDate ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(value.toDate()) : '—';
@@ -10,11 +11,12 @@ const whatsApp = phone => `https://wa.me/${String(phone).length <= 11 ? '55' : '
 export default function AdminPanel() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState({ reservations: [], rsvps: [], admins: [] });
+  const [data, setData] = useState({ reservations: [], rsvps: [], admins: [], catalog: [] });
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
-  const giftMap = useMemo(() => Object.fromEntries(gifts.map(gift => [gift.id, gift])), []);
+  const catalog = useMemo(() => mergeGiftCatalog(data.catalog), [data.catalog]);
+  const giftMap = useMemo(() => Object.fromEntries(catalog.map(gift => [gift.id, gift])), [catalog]);
 
   async function refresh(activeUser = user) {
     if (!activeUser || activeUser.isAnonymous) { setLoading(false); return; }
@@ -31,7 +33,7 @@ export default function AdminPanel() {
     catch (err) { setError(err.code === 'auth/operation-not-allowed' ? 'Ative o provedor Google no Firebase Authentication.' : 'Não foi possível entrar com o Google. Tente novamente.'); }
     finally { setBusy(false); }
   }
-  async function logout() { await signOutAdmin(); setUser(null); setData({ reservations: [], rsvps: [], admins: [] }); setError(''); }
+  async function logout() { await signOutAdmin(); setUser(null); setData({ reservations: [], rsvps: [], admins: [], catalog: [] }); setError(''); }
   async function createAdmin(event) {
     event.preventDefault(); setBusy(true); setError('');
     const form = new FormData(event.currentTarget);
@@ -63,7 +65,8 @@ export default function AdminPanel() {
     {notice && <p className="admin-notice" role="status">{notice}</p>}{error && <p className="admin-error" role="alert">{error}</p>}
     <div className="admin-toolbar"><button className="button outline" onClick={() => refresh()} disabled={loading || busy}><RefreshCw size={16}/>{loading ? 'Atualizando…' : 'Atualizar dados'}</button></div>
     <section className="admin-stats"><article><Gift/><div><strong>{data.reservations.length}</strong><span>presentes reservados</span></div></article><article><CheckCircle2/><div><strong>{confirmed.length}</strong><span>confirmações</span></div></article><article><Users/><div><strong>{guests}</strong><span>pessoas confirmadas</span></div></article><article><Heart/><div><strong>{data.rsvps.filter(item => item.attendance === 'no').length}</strong><span>não poderão ir</span></div></article></section>
-    <section className="admin-section"><div className="admin-section-title"><div><p className="eyebrow">LISTA DE PRESENTES</p><h2>Quem escolheu o quê</h2></div><span>{data.reservations.length} de {gifts.length}</span></div>{data.reservations.length ? <div className="admin-table-wrap"><table><thead><tr><th>Presente</th><th>Convidado</th><th>Contato</th><th>Reserva</th><th/></tr></thead><tbody>{data.reservations.map(item => <tr key={item.id}><td><strong>#{String(giftMap[item.id]?.number || 0).padStart(2, '0')} · {giftMap[item.id]?.name || item.id}</strong><span>{giftMap[item.id]?.store}</span></td><td>{item.name}</td><td><a href={whatsApp(item.phone)} target="_blank" rel="noreferrer"><MessageCircle size={14}/>{item.phone}</a></td><td>{formatDate(item.createdAt)}</td><td><button className="icon-button danger" title="Liberar presente" onClick={() => release(item.id)} disabled={busy}><Trash2 size={16}/></button></td></tr>)}</tbody></table></div> : <div className="admin-empty"><Gift/><p>Nenhum presente reservado ainda.</p></div>}</section>
+    <AdminGiftCatalog catalog={catalog} reservations={data.reservations} onRefresh={() => refresh()} onNotice={setNotice} onError={setError}/>
+    <section className="admin-section"><div className="admin-section-title"><div><p className="eyebrow">RESERVAS</p><h2>Quem escolheu o quê</h2></div><span>{data.reservations.length} de {catalog.filter(gift => !gift.deleted).length}</span></div>{data.reservations.length ? <div className="admin-table-wrap"><table><thead><tr><th>Presente</th><th>Convidado</th><th>Contato</th><th>Reserva</th><th/></tr></thead><tbody>{data.reservations.map(item => <tr key={item.id}><td><strong>#{String(giftMap[item.id]?.number || 0).padStart(2, '0')} · {giftMap[item.id]?.name || item.id}</strong><span>{giftMap[item.id]?.store}</span></td><td>{item.name}</td><td><a href={whatsApp(item.phone)} target="_blank" rel="noreferrer"><MessageCircle size={14}/>{item.phone}</a></td><td>{formatDate(item.createdAt)}</td><td><button className="icon-button danger" title="Liberar presente" onClick={() => release(item.id)} disabled={busy}><Trash2 size={16}/></button></td></tr>)}</tbody></table></div> : <div className="admin-empty"><Gift/><p>Nenhum presente reservado ainda.</p></div>}</section>
     <section className="admin-section"><div className="admin-section-title"><div><p className="eyebrow">PRESENÇAS</p><h2>Respostas dos convidados</h2></div><span>{data.rsvps.length} respostas</span></div>{data.rsvps.length ? <div className="rsvp-admin-grid">{data.rsvps.map(item => <article key={item.id}><div><span className={item.attendance === 'yes' ? 'yes' : 'no'}>{item.attendance === 'yes' ? 'Confirmado' : 'Não poderá ir'}</span><time>{formatDate(item.createdAt)}</time></div><h3>{item.name}</h3><a href={whatsApp(item.phone)} target="_blank" rel="noreferrer"><MessageCircle size={14}/>{item.phone}</a>{item.attendance === 'yes' && <p>{item.guests} {item.guests === 1 ? 'pessoa' : 'pessoas'}</p>}{item.message && <blockquote>“{item.message}”</blockquote>}</article>)}</div> : <div className="admin-empty"><Users/><p>Nenhuma confirmação recebida ainda.</p></div>}</section>
     <section className="admin-section admin-access"><div><p className="eyebrow">ACESSO</p><h2>Administradores</h2><p>Você é o administrador principal. Adicione o e-mail Google da Isadora.</p><div className="admin-users"><span><ShieldCheck size={15}/>{bootstrapEmail}<small>principal</small></span>{data.admins.map(item => <span key={item.id}><ShieldCheck size={15}/>{item.name} · {item.email}<button aria-label={`Remover ${item.email}`} onClick={() => revoke(item.email)} disabled={busy}><Trash2 size={14}/></button></span>)}</div></div><form onSubmit={createAdmin}><label>Nome<input name="name" required minLength={2} maxLength={80} placeholder="Isadora"/></label><label>E-mail Google<input name="email" type="email" required maxLength={254} placeholder="isadora@gmail.com"/></label><button className="button primary" disabled={busy}><Plus size={16}/>Adicionar acesso</button></form></section>
   </main>;
