@@ -19,14 +19,13 @@ function Header({ giftPage }) {
 }
 function Footer() { return <footer><FloralLogo footer/><p>Nosso novo lar. O mesmo amor.</p><span>Feito com carinho, por nós dois <Heart size={13}/></span><a className="admin-link" href="/admin">Área do casal</a></footer>; }
 function Gallery() {
-  const [layout, setLayout] = useState('mural');
   const [page, setPage] = useState(0);
   const pages = Math.ceil(photos.length / 4);
-  const visible = layout === 'mural' ? photos.slice(page * 4, page * 4 + 4) : photos;
+  const visible = photos.slice(page * 4, page * 4 + 4);
   return <section className="gallery-section" id="historia"><div className="section-heading"><div><p className="eyebrow">PEDACINHOS DA NOSSA HISTÓRIA</p><h2>Onde a gente está,<br/>o amor faz <em>morada.</em></h2></div><div className="gallery-intro"><p>Entre passeios, risadas e tantos momentos bons, nasceu a vontade de dividir também o dia a dia. Agora, a nossa próxima aventura tem endereço: o nosso lar.</p><p className="album-note">Uma coleção de nós dois ♡</p></div></div>
-    <div className="album-toolbar"><div className="layout-options" role="group" aria-label="Formato do álbum">{[['mural', 'Mural de 4'], ['mosaic', 'Mosaico'], ['polaroids', 'Polaroides']].map(([value, label]) => <button key={value} aria-pressed={layout === value} onClick={() => setLayout(value)}>{label}</button>)}</div><span>{photos.length} lembranças para guardar</span></div>
-    <div className={'photo-album album-' + layout} aria-label="Álbum de Isadora e Matheus">{visible.map(([id, caption], i) => <figure key={id}><img loading="lazy" decoding="async" src={`/photos/640/${id}.webp`} srcSet={`/photos/640/${id}.webp 640w, /photos/${id}.webp 1200w`} sizes={layout === 'mural' ? '(max-width: 900px) 45vw, 25vw' : '(max-width: 900px) 48vw, 40vw'} width="1200" height="1600" alt={`Isadora e Matheus — ${caption}`}/><figcaption><span>{String((layout === 'mural' ? page * 4 : 0) + i + 1).padStart(2, '0')}</span>{caption}</figcaption></figure>)}</div>
-    {layout === 'mural' && <div className="gallery-controls album-pagination"><button onClick={() => setPage((page + pages - 1) % pages)} aria-label="Mural anterior"><ArrowLeft size={19}/></button><span aria-live="polite">Mural {page + 1} de {pages}</span><button onClick={() => setPage((page + 1) % pages)} aria-label="Próximo mural"><ArrowRight size={19}/></button></div>}
+    <div className="album-toolbar"><span>{photos.length} lembranças para guardar</span></div>
+    <div className="photo-album album-mural" aria-label="Álbum de Isadora e Matheus">{visible.map(([id, caption], i) => <figure key={id}><img loading="lazy" decoding="async" src={`/photos/640/${id}.webp`} srcSet={`/photos/640/${id}.webp 640w, /photos/${id}.webp 1200w`} sizes="(max-width: 900px) 45vw, 25vw" width="1200" height="1600" alt={`Isadora e Matheus — ${caption}`}/><figcaption><span>{String(page * 4 + i + 1).padStart(2, '0')}</span>{caption}</figcaption></figure>)}</div>
+    <div className="gallery-controls album-pagination"><button onClick={() => setPage((page + pages - 1) % pages)} aria-label="Mural anterior"><ArrowLeft size={19}/></button><span aria-live="polite">Mural {page + 1} de {pages}</span><button onClick={() => setPage((page + 1) % pages)} aria-label="Próximo mural"><ArrowRight size={19}/></button></div>
   </section>;
 }
 function RSVP() {
