@@ -7,7 +7,7 @@ export function watchReservations(onChange, onError) {
   let unsubscribe;
   firebaseSession().then(({ db }) => {
     if (stopped) return;
-    unsubscribe = onSnapshot(query(collection(db, 'giftStatus'), limit(24)), { includeMetadataChanges: true }, snapshot => {
+    unsubscribe = onSnapshot(query(collection(db, 'giftStatus'), limit(40)), { includeMetadataChanges: true }, snapshot => {
       if (snapshot.metadata.fromCache || snapshot.metadata.hasPendingWrites) {
         onError(new Error('Aguardando conexão para confirmar a disponibilidade.'));
         return;

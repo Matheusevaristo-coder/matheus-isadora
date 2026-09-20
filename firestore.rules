@@ -21,7 +21,7 @@ service cloud.firestore {
           || exists(/databases/$(database)/documents/admins/$(request.auth.token.email)));
     }
     function validGift(id) {
-      return id in ['varal', 'puffs', 'protetor', 'escorredor-aco', 'marinex', 'diamond', 'porta-frios', 'potes', 'lixeira', 'gabinete', 'faqueiro', 'pressao', 'cesto', 'assadeiras', 'cama-bege', 'escorredor-branco', 'cafeteira-italiana', 'ferro', 'liquidificador', 'galheteiro', 'lavanderia', 'sanduicheira', 'cama-verde', 'banho'];
+      return id in ['varal', 'puffs', 'protetor', 'escorredor-aco', 'marinex', 'diamond', 'porta-frios', 'potes', 'lixeira', 'gabinete', 'faqueiro', 'pressao', 'cesto', 'assadeiras', 'cama-bege', 'escorredor-branco', 'cafeteira-italiana', 'ferro', 'liquidificador', 'galheteiro', 'lavanderia', 'sanduicheira', 'cama-verde', 'banho', 'tacas-diamond', 'tacas-sobremesa', 'jarra-diamond', 'toalhas-roseli', 'cama-herchcovitch'];
     }
     function validContact(data) {
       return uidUnchanged(data) && data.name is string && data.name.size() >= 2 && data.name.size() <= 100
@@ -53,7 +53,7 @@ service cloud.firestore {
     }
     match /giftStatus/{id} {
       allow get: if authenticated() && validGift(id);
-      allow list: if authenticated() && request.query.limit <= 24;
+      allow list: if authenticated() && request.query.limit <= 40;
       allow create: if authenticated() && validGift(id) && validStatus(request.resource.data)
         && !exists(/databases/$(database)/documents/giftReservations/$(id))
         && validReservation(getAfter(/databases/$(database)/documents/giftReservations/$(id)).data);

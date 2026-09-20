@@ -21,8 +21,8 @@ const bootstrapEmail = 'matheusevaristo10@gmail.com';
 test('permite todos os presentes do catálogo e consulta usada pelo site', async () => {
   const db = env.authenticatedContext('alice').firestore();
   for (const gift of gifts) await assertSucceeds(reserve(db,'alice',gift.id));
-  const snapshot = await assertSucceeds(getDocs(query(collection(db,'giftStatus'),limit(24))));
-  assert.equal(snapshot.size,24);
+  const snapshot = await assertSucceeds(getDocs(query(collection(db,'giftStatus'),limit(40))));
+  assert.equal(snapshot.size,gifts.length);
   for (const item of snapshot.docs) assert.deepEqual(Object.keys(item.data()).sort(), ['createdAt','reserved']);
 });
 test('apenas uma de duas reservas concorrentes vence', async () => {
@@ -35,7 +35,7 @@ test('nega acesso sem autenticação e leitura de dados privados', async () => {
   const bob = env.authenticatedContext('bob').firestore();
   const anon = env.unauthenticatedContext().firestore();
   await assertSucceeds(reserve(alice,'alice'));
-  await assertFails(getDocs(query(collection(anon,'giftStatus'),limit(24))));
+  await assertFails(getDocs(query(collection(anon,'giftStatus'),limit(40))));
   await assertFails(reserve(anon,'alice','puffs'));
   for (const db of [alice,bob,anon]) {
     await assertFails(getDoc(doc(db,'giftReservations','varal')));

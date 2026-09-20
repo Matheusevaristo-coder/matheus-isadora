@@ -14,13 +14,13 @@ O plano Spark pode atender dentro das cotas de Hosting, Firestore e Authenticati
 
 ## Dados e regras
 
-- `giftStatus/{giftId}`: apenas `reserved: true` e data. A lista acompanha mudanças em tempo real com uma consulta limitada a 24 documentos. Nenhum nome, telefone ou UID aparece nessa coleção.
+- `giftStatus/{giftId}`: apenas `reserved: true` e data. A lista acompanha mudanças em tempo real com uma consulta limitada a 40 documentos. Nenhum nome, telefone ou UID aparece nessa coleção.
 - `giftReservations/{giftId}`: nome, WhatsApp, UID e data, acessíveis ao casal pelo Console. Visitantes não podem ler esses documentos.
 - A reserva cria status e dados privados em um único lote. As regras exigem os dois, ID válido, campos e tipos esperados. Atualizações e exclusões por clientes são negadas; duas reservas concorrentes não podem sobrescrever o mesmo item.
 - `rsvps/{uid}`: uma confirmação por identidade anônima, com nome/telefone, até quatro participantes e recado. O visitante pode consultar seu documento; não pode listar os de outras pessoas, alterar ou excluir.
 - `admins/{email}`: acessos Google adicionais ao painel. O administrador principal é `matheusevaristo10@gmail.com`; depois de entrar, ele pode cadastrar o e-mail Google da Isadora.
 - Em `/admin`, o casal acompanha quem reservou cada presente e todas as confirmações. O botão de liberar presente exclui os dois documentos da reserva em uma única operação.
-- Ao adicionar/remover produtos em `src/content.js`, atualize a lista de IDs em `firestore.rules` e o limite da consulta/regras caso ultrapasse 24 itens.
+- Ao adicionar/remover produtos em `src/content.js`, atualize a lista de IDs em `firestore.rules`; a consulta atual comporta até 40 itens.
 
 Autenticação anônima identifica uma sessão, não comprova identidade humana nem propriedade do telefone. Trocar navegador/limpar dados permite nova identidade. Não há mais bloqueio por IP nem deduplicação privada pelo telefone do backend anterior; visitantes mal-intencionados podem criar sessões e consumir cotas. Avalie App Check e validações adicionais antes de divulgar amplamente.
 

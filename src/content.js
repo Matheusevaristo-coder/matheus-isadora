@@ -29,11 +29,16 @@ const chosen = [
   ['sanduicheira', 'Sanduicheira Cadence SAN400', 'Na cozinha', 'Elétrica, 750 W, na cor preta.', '3B72EZUsdy', 97.47],
   ['cama-verde', 'Jogo de cama casal Elegance verde', 'Nosso cantinho', '400 fios — First Class.', 'https://www.firstclass.com.br/jogo-de-cama--casal-400-fios--elegance---verde-13-5305/p'],
   ['banho', 'Jogo de banho Karsten Provence', 'Nosso cantinho', 'Conjunto com 5 peças — Zelo.', 'https://www.zelo.com.br/jogo-de-banho-karsten-provence-5-pecas-p1012216?pp=/44.5640/'],
+  ['tacas-diamond', '6 taças Diamond com borda dourada', 'À mesa', 'Taças transparentes de 330 ml — Gamma.', '9V1cY3NJpY', 61.93],
+  ['tacas-sobremesa', '6 taças para sobremesa Diamond', 'À mesa', 'Cristal ecológico de 180 ml com fio de ouro — Lyor.', '9fL2kVjNXK', 63.99],
+  ['jarra-diamond', 'Jarra de vidro Diamond 1,2 L', 'À mesa', 'Jarra de vidro da linha Diamond — Gamma.', '4fwMnRuiHq', 69.99],
+  ['toalhas-roseli', 'Kit de toalhas Roseli Extra Soft', 'Nosso cantinho', 'Duas toalhas de banho e duas de rosto — Buddemeyer.', 'https://www.riachuelo.com.br/produto/kit-toalha-de-banho-2-pecas-toalha-de-rosto-2-pecas-roseli-extra-soft-multicor-buddemeyer-KIT922914'],
+  ['cama-herchcovitch', 'Jogo de cama Alexandre Herchcovitch', 'Nosso cantinho', 'Casal, percal 180 fios e 100% algodão — Zelo.', 'https://www.zelo.com.br/jogo-de-cama-alexandre-herchcovitch-casal-percal-180-fios-100-algodao-p996781?pp=/44.5710/'],
 ];
-export const gifts = chosen.map(([id, name, category, description, link, price, maxPrice]) => ({
-  id, name, category, description, price, maxPrice, image: '',
+export const gifts = chosen.map(([id, name, category, description, link, price, maxPrice], index) => ({
+  id, number: index + 1, name, category, description, price, maxPrice, image: '',
   url: link.startsWith('https://') ? link : `https://s.shopee.com.br/${link}?share_channel_code=1`,
-  store: link.includes('firstclass') ? 'First Class' : link.includes('zelo.com') ? 'Zelo' : link.includes('meli.la') ? 'Mercado Livre' : 'Shopee',
+  store: link.includes('firstclass') ? 'First Class' : link.includes('zelo.com') ? 'Zelo' : link.includes('riachuelo.com') ? 'Riachuelo' : link.includes('meli.la') ? 'Mercado Livre' : 'Shopee',
   icon: category === 'À mesa' ? 'glass' : category === 'Na cozinha' ? 'pot' : category === 'Lavanderia' ? 'towels' : 'bed',
 }));
 export const photos = [
