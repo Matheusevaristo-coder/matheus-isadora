@@ -34,7 +34,7 @@ export default function GiftList() {
     } catch (err) { setError(err.message || 'Não foi possível reservar. Tente novamente.'); }
     finally { setSaving(false); }
   }
-  return <main className="gifts-page"><a className="text-link" href="/"><ArrowLeft size={16}/>Voltar ao convite</a><div className="gifts-heading"><p className="eyebrow">UM POUQUINHO DE VOCÊ NO NOSSO LAR</p><h1>Nossa lista de <em>presentes.</em></h1><p>Escolha um presente, reserve aqui e depois compre na loja.<br/>Assim, cada carinho chega sem repetir.</p><span className="gift-note">Reserve antes de comprar para evitar presentes repetidos ♡</span><span className="voltage-note">⚡ Nossa casa usa 110 V — atenção ao escolher eletrodomésticos.</span></div>
+  return <main className="gifts-page"><a className="text-link" href="/"><ArrowLeft size={16}/>Voltar ao convite</a><div className="gifts-heading"><p className="eyebrow">UM POUQUINHO DE VOCÊ NO NOSSO LAR</p><h1>Nossa lista de <em>presentes.</em></h1><p>Escolha um presente, reserve aqui e depois compre na loja.<br/> Assim, cada carinho chega sem repetir.</p><span className="gift-note">Reserve antes de comprar para evitar presentes repetidos ♡</span><span className="voltage-note">⚡ Nossa casa usa 110 V — atenção ao escolher eletrodomésticos.</span></div>
     <p className="price-note">Valores enviados pelo casal. O preço final e a disponibilidade são os da loja.</p>
     {notice && <p className="reservation-notice" role="status">{notice}</p>}
     <div className="gift-filters" role="group" aria-label="Filtrar presentes">{['Todos', ...new Set(catalog.map(g => g.category))].map(item => <button key={item} aria-pressed={category === item} onClick={() => setCategory(item)}>{item}</button>)}</div>
