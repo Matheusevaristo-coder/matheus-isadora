@@ -20,7 +20,7 @@ O plano Spark pode atender dentro das cotas de Hosting, Firestore e Authenticati
 - `rsvps/{uid}`: uma confirmação por identidade anônima, com nome/telefone, até quatro participantes e recado. O visitante pode consultar seu documento; não pode listar os de outras pessoas, alterar ou excluir.
 - `admins/{email}`: acessos Google adicionais ao painel. O administrador principal é `matheusevaristo10@gmail.com`; depois de entrar, ele pode cadastrar o e-mail Google da Isadora.
 - `giftCatalog/{giftId}`: alterações e novos presentes cadastrados pelo painel. Convidados podem ler o catálogo; somente administradores Google autorizados podem gravar.
-- Em `/admin`, o casal cria e edita presentes, altera links e valores, ativa, oculta, exclui, restaura, reserva e libera itens. O painel também acompanha quem reservou cada presente e todas as confirmações.
+- Em `/admin`, o casal cria e edita presentes, altera links e valores, ativa, oculta, exclui, restaura, reserva e libera itens. O catálogo é paginado de 15 em 15; o painel também acompanha quem reservou cada presente e todas as confirmações.
 - Ao adicionar/remover produtos em `src/content.js`, atualize a lista de IDs em `firestore.rules`; a consulta atual comporta até 40 itens.
 
 Autenticação anônima identifica uma sessão, não comprova identidade humana nem propriedade do telefone. Trocar navegador/limpar dados permite nova identidade. Não há mais bloqueio por IP nem deduplicação privada pelo telefone do backend anterior; visitantes mal-intencionados podem criar sessões e consumir cotas. Avalie App Check e validações adicionais antes de divulgar amplamente.
